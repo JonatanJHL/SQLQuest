@@ -1,137 +1,680 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>SQL Quest: El Camino del UPDATE</title>
-  <style>
-    body {
-      font-family: 'Courier New', monospace;
-      background-color: #1e1e1e;
-      color: #d4d4d4;
-      padding: 2rem;
-    }
-    h1 {
-      text-align: center;
-      color: #4ec9b0;
-    }
-    #mapa {
-      margin-top: 2rem;
-    }
-    .bloque {
-      padding: 1rem;
-      background-color: #2d2d2d;
-      margin-bottom: 1rem;
-      border-left: 4px solid #4ec9b0;
-    }
-    .bloque p {
-      margin: 0.3rem 0;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 0.6rem;
-      font-family: monospace;
-      font-size: 1rem;
-      border: none;
-      background-color: #252526;
-      color: #d4d4d4;
-      border: 1px solid #555;
-      margin-top: 1rem;
-    }
-    button {
-      margin-top: 1rem;
-      padding: 0.6rem 1rem;
-      background-color: #4ec9b0;
-      color: #1e1e1e;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-    }
-    #mensaje {
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-    .correcto {
-      color: #4ec9b0;
-    }
-    .error {
-      color: #f44747;
-    }
-  </style>
-</head>
-<body>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Quest — El Laberinto de las Queries</title>
+<meta name="description" content="Aprende SQL jugando. Un RPG educativo donde usas comandos SQL para explorar un laberinto.">
+<meta name="author" content="JonatanJHL">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗄️</text></svg>">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0d0d; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 1rem; }
+  #game { font-family: 'Courier New', monospace; background: #0d0d0d; color: #e0e0e0; max-width: 900px; width: 100%; }
+  @media (max-width: 700px) {
+    #layout { grid-template-columns: 1fr !important; }
+    canvas { margin: 0 auto; }
+  }
+  #title { text-align: center; font-size: 18px; font-weight: 500; color: #4ec9b0; margin-bottom: 1rem; letter-spacing: 2px; }
+  #layout { display: grid; grid-template-columns: auto 1fr; gap: 1rem; }
+  canvas { display: block; image-rendering: pixelated; border: 2px solid #333; }
+  #panel { display: flex; flex-direction: column; gap: 0.75rem; }
+  .box { background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 0.75rem; }
+  .box-title { font-size: 11px; color: #4ec9b0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+  #stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { font-size: 12px; }
+  .stat span { color: #4ec9b0; font-weight: 500; }
+  #inventory { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; }
+  .item-badge { font-size: 11px; background: #2a2a2a; border: 1px solid #444; border-radius: 4px; padding: 3px 8px; }
+  .item-badge.weapon { border-color: #e07070; color: #e07070; }
+  .item-badge.armor { border-color: #70a0e0; color: #70a0e0; }
+  .item-badge.potion { border-color: #70e0a0; color: #70e0a0; }
+  .item-badge.gold { border-color: #e0c070; color: #e0c070; }
+  .item-badge.key { border-color: #e070e0; color: #e070e0; }
+  #log { font-size: 12px; line-height: 1.6; max-height: 120px; overflow-y: auto; color: #aaa; }
+  .log-ok { color: #4ec9b0; }
+  .log-err { color: #f44747; }
+  .log-info { color: #e0c070; }
+  .log-reward { color: #ffd700; animation: pulse 0.5s ease; }
+  .log-cmd { color: #aaa; font-style: italic; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  #sql-area { display: flex; flex-direction: column; gap: 0.5rem; }
+  #hint { font-size: 11px; color: #777; font-style: italic; }
+  #cmd { width: 100%; background: #111; border: 1px solid #444; color: #e0e0e0; font-family: 'Courier New', monospace; font-size: 13px; padding: 0.5rem; border-radius: 4px; }
+  #cmd:focus { outline: none; border-color: #4ec9b0; }
+  #exec-btn { background: #4ec9b0; color: #0d0d0d; border: none; font-family: 'Courier New', monospace; font-size: 13px; font-weight: bold; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+  #exec-btn:hover { background: #3ab89f; }
+  #legend { display: flex; flex-wrap: wrap; gap: 8px; }
+  .leg { font-size: 11px; display: flex; align-items: center; gap: 4px; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  #menu-btns { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .menu-btn { background: #222; border: 1px solid #444; color: #888; font-size: 11px; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+  .menu-btn:hover { border-color: #4ec9b0; color: #4ec9b0; }
+  #achievements { font-size: 10px; color: #666; margin-top: 0.5rem; }
+  #tutorial { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; }
+  .tutorial-box { background: #1a1a1a; border: 2px solid #4ec9b0; border-radius: 8px; padding: 1.5rem; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+  .tutorial-box h2 { color: #4ec9b0; margin-bottom: 1rem; text-align: center; }
+  .tutorial-box p { margin-bottom: 0.75rem; line-height: 1.5; color: #ccc; }
+  .tutorial-box code { background: #111; padding: 2px 6px; border-radius: 3px; color: #e0c070; }
+  .tutorial-box .example { background: #222; padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0; font-size: 12px; }
+  .tutorial-box .example code { display: block; margin: 4px 0; }
+  .tutorial-box button { background: #4ec9b0; color: #0d0d0d; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; font-weight: bold; cursor: pointer; display: block; margin: 1rem auto 0; }
+  .tutorial-box button:hover { background: #3ab89f; }
+  #quick-help { font-size: 10px; color: #555; margin-top: 0.5rem; }
+</style>
 
-  <h1>SQL Quest: El Camino del UPDATE</h1>
-
-  <div id="mapa" class="bloque">
-    <p><strong>Ubicación actual:</strong> <span id="ubicacion"></span></p>
-    <p><strong>Caminos posibles:</strong> <span id="caminos"></span></p>
+<div id="game">
+  <div id="title">SQL QUEST — EL LABERINTO DE LAS QUERIES</div>
+  <div id="layout">
+    <canvas id="mapCanvas" width="288" height="288"></canvas>
+    <div id="panel">
+      <div class="box">
+        <div class="box-title">Estado del héroe</div>
+        <div id="stats">
+          <div class="stat">HP: <span id="s-hp">100/100</span></div>
+          <div class="stat">ATK: <span id="s-atk">10</span></div>
+          <div class="stat">DEF: <span id="s-def">0</span></div>
+          <div class="stat">Nivel: <span id="s-lvl">1</span></div>
+          <div class="stat">XP: <span id="s-xp">0/50</span></div>
+          <div class="stat">Pos: <span id="s-pos">(0,0)</span></div>
+          <div class="stat">Oro: <span id="s-gold">0</span></div>
+        </div>
+      </div>
+      <div class="box">
+        <div class="box-title">Inventario</div>
+        <div id="inventory"><span style="font-size:11px;color:#555">Vacío</span></div>
+      </div>
+      <div class="box">
+        <div class="box-title">Log</div>
+        <div id="log"><span class="log-info">Bienvenido al Laberinto SQL. Usa comandos para moverte.</span></div>
+      </div>
+      <div class="box" id="sql-area">
+        <div class="box-title">Terminal SQL</div>
+        <div id="hint">—</div>
+        <input id="cmd" type="text" placeholder="Escribe tu comando SQL..." autocomplete="off" />
+        <button id="exec-btn" onclick="ejecutar()">EJECUTAR</button>
+      </div>
+      <div class="box">
+        <div class="box-title">Leyenda</div>
+        <div id="legend">
+          <div class="leg"><div class="leg-dot" style="background:#4ec9b0"></div>Héroe</div>
+          <div class="leg"><div class="leg-dot" style="background:#e07070"></div>Enemigo</div>
+          <div class="leg"><div class="leg-dot" style="background:#e0c070"></div>Tesoro</div>
+          <div class="leg"><div class="leg-dot" style="background:#70a0e0"></div>Arma</div>
+          <div class="leg"><div class="leg-dot" style="background:#a070e0"></div>Armadura</div>
+          <div class="leg"><div class="leg-dot" style="background:#70e0a0"></div>Poción</div>
+          <div class="leg"><div class="leg-dot" style="background:#555"></div>Muro</div>
+          <div class="leg"><div class="leg-dot" style="background:#c0a060"></div>Salida</div>
+        </div>
+        <div id="menu-btns">
+          <button class="menu-btn" onclick="saveGame()">💾 Guardar</button>
+          <button class="menu-btn" onclick="loadGame()">📂 Cargar</button>
+          <button class="menu-btn" onclick="resetGame()">🔄 Nuevo</button>
+          <button class="menu-btn" onclick="showHelp()">❓ Ayuda</button>
+        </div>
+        <div id="achievements">Logros: <span id="achs">0</span>/10</div>
+      </div>
+    </div>
   </div>
+</div>
 
-  <div class="bloque">
-    <p>Ingresa un comando SQL para avanzar:</p>
-    <code>UPDATE posicion SET id = [id del camino];</code>
-    <input type="text" id="comando" placeholder="Ej: UPDATE posicion SET id = 2;">
-    <button onclick="ejecutarComando()">Ejecutar</button>
-    <p id="mensaje"></p>
+<div id="tutorial">
+  <div class="tutorial-box">
+    <h2>🗄️ SQL QUEST</h2>
+    <p>Aprende SQL mientras exploras un laberinto. Usa comandos SQL reales para moverte, combatir y recoger objetos.</p>
+    
+    <p><strong>📍 Objetivo:</strong> Llega a la salida usando la Llave Dorada.</p>
+    
+    <p><strong>🖱️ Cómo jugar:</strong></p>
+    <div class="example">
+      <code>SELECT * FROM mapa;</code>
+      <span style="color:#777">→ Ver tu posición y direcciones disponibles</span>
+    </div>
+    <div class="example">
+      <code>UPDATE héroe SET posición = 'norte';</code>
+      <span style="color:#777">→ Moverte al norte (sur, este, oeste)</span>
+    </div>
+    <div class="example">
+      <code>SELECT * FROM héroes;</code>
+      <span style="color:#777">→ Ver tus stats (HP, ATK, nivel, oro)</span>
+    </div>
+    <div class="example">
+      <code>INSERT INTO ataque;</code>
+      <span style="color:#777">→ Atacar al enemigo</span>
+    </div>
+    <div class="example">
+      <code>UPDATE héroes SET hp = hp + 30;</code>
+      <span style="color:#777">→ Curarte (necesitas poción)</span>
+    </div>
+    <div class="example">
+      <code>SELECT * FROM inventario;</code>
+      <span style="color:#777">→ Ver tus objetos</span>
+    </div>
+    
+    <p><strong>⚔️ En combate:</strong></p>
+    <p style="font-size:12px;color:#888">Derrota enemigos para ganar XP y oro. Recoge armas y armaduras para fortalecerte.</p>
+    
+    <p><strong>💡 Comandos extra:</strong></p>
+    <div class="example" style="font-size:11px">
+      <code>SELECT hp FROM héroes;</code> → Ver solo HP<br>
+      <code>SELECT COUNT(*) FROM inventario;</code> → Contar objetos<br>
+      <code>SELECT COUNT(*) FROM enemigos;</code> → Ver enemigos restantes
+    </div>
+    
+    <button onclick="closeTutorial()">¡EMPEZAR!</button>
   </div>
+</div>
 
-  <script>
-    const mapa = [
-      { id: 1, nombre: "Inicio", caminos: [2] },
-      { id: 2, nombre: "Puente", caminos: [3, 4] },
-      { id: 3, nombre: "Bosque", caminos: [5] },
-      { id: 4, nombre: "Cueva", caminos: [5] },
-      { id: 5, nombre: "Tesoro", caminos: [] },
-    ];
+<script>
+const TILE_SIZE = 16;
+const GRID = 9, CELL = 32;
+const T = { FLOOR:0, WALL:1, ENEMY:2, TREASURE:3, WEAPON:4, ARMOR:5, POTION:6, EXIT:7, KEY:8 };
 
-    let posicion = 1;
+const TILE_MAP = {
+  0: {x:0,y:0},
+  1: {x:1,y:0},
+  2: {x:2,y:0},
+  3: {x:3,y:0},
+  4: {x:4,y:0},
+  5: {x:5,y:0},
+  6: {x:6,y:0},
+  7: {x:7,y:0},
+  8: {x:8,y:0},
+  9: {x:9,y:0},
+  10:{x:10,y:0},
+  11:{x:11,y:0},
+  12:{x:0,y:1},
+  13:{x:1,y:1},
+  14:{x:2,y:1},
+  15:{x:3,y:1},
+  16:{x:4,y:1},
+  17:{x:5,y:1},
+  18:{x:6,y:1},
+  19:{x:7,y:1},
+  20:{x:8,y:1},
+  21:{x:9,y:1},
+  22:{x:10,y:1},
+  23:{x:11,y:1},
+  24:{x:0,y:2},
+  25:{x:1,y:2},
+  26:{x:2,y:2},
+  27:{x:3,y:2},
+  28:{x:4,y:2},
+  29:{x:5,y:2},
+  30:{x:6,y:2},
+  31:{x:7,y:2},
+  32:{x:8,y:2},
+  33:{x:9,y:2},
+  34:{x:10,y:2},
+  35:{x:11,y:2}
+};
 
-    function obtenerNodo(id) {
-      return mapa.find(n => n.id === id);
+const TILESPRITES = {
+  0:24,
+  1:25,
+  2:26,
+  3:27,
+  4:28,
+  5:29,
+  6:30,
+  7:31,
+  8:32
+};
+
+const TILE_MAP_Colors = {
+  0:'#1a1a1a', 1:'#555', 2:'#e07070', 3:'#e0c070',
+  4:'#70a0e0', 5:'#a070e0', 6:'#70e0a0', 7:'#c0a060', 8:'#e070e0'
+};
+
+const TILE_SPRITES = {
+  0:24,
+  1:25,
+  2:26,
+  3:27,
+  4:28,
+  5:29,
+  6:30,
+  7:31,
+  8:32
+};
+
+const TILES_URL = 'img/kenney_tiny-dungeon/Tilemap/tilemap_packed.png';
+let tilesImage = new Image();
+
+function loadTiles(){
+  tilesImage.src = TILES_URL;
+  tilesImage.onload = () => render();
+  tilesImage.onerror = () => {
+    console.log('No se pudieron cargar sprites, usando modo texto');
+    render();
+  };
+}
+
+const ITEMS = {
+  4:[{name:'Espada de Fuego',type:'weapon',atk:15,val:50},{name:'Arco Élfico',type:'weapon',atk:12,val:40},{name:'Daga Envenenada',type:'weapon',atk:10,val:30}],
+  5:[{name:'Escudo de Hierro',type:'armor',def:8,val:30},{name:'Cota de Malla',type:'armor',def:12,val:45}],
+  6:[{name:'Poción de Vida',type:'potion',hp:30,val:15},{name:'Elixir Mayor',type:'potion',hp:60,val:25}],
+  3:[{name:'Cofre de Oro',type:'gold',val:50},{name:'Rubí Antiguo',type:'gold',val:100}],
+  8:[{name:'Llave Dorada',type:'key',val:0}]
+};
+
+const ENEMIES = [
+  {name:'Goblin',hp:20,atk:5,xp:10,gold:5,val:10},
+  {name:'Esqueleto',hp:30,atk:8,xp:15,gold:10,val:20},
+  {name:'Dragón Menor',hp:60,atk:18,xp:40,gold:30,val:50},
+  {name:'Orco',hp:40,atk:12,xp:20,gold:15,val:25}
+];
+
+const ACHIEVEMENTS = [
+  {id:'first_blood',name:'Primera Sangre',desc:'Derrota a tu primer enemigo'},
+  {id:'treasure_hunter',name:'Buscatesoros',desc:'Recoge 5 cofres'},
+  {id:'level_up',name:'Subida de Nivel',desc:'Alcanza el nivel 2'},
+  {id:'rich',name:'Acomodado',desc:'Acumula 200 de oro'},
+  {id:'explorer',name:'Explorador',desc:'Visita 15 casillas'},
+  {id:'slayer',name:'Cazador',desc:'Derrota 5 enemigos'},
+  {id:'survivor',name:'Superviviente',desc:'Sobrevive con menos de 20 HP'},
+  {id:'boss_killer',name:'Cazador de Dragones',desc:'Derrota al Dragón Menor'},
+  {id:'richer',name:'Millonario',desc:'Acumula 500 de oro'},
+  {id:'master',name:'Maestro SQL',desc:'Completa el juego'}
+];
+
+let map = [], objects = {}, hero = {x:0,y:0,hp:100,maxHp:100,atk:10,lvl:1,xp:0,xpNext:50,gold:0,def:0,steps:0,kills:0,chests:0}, inventory=[], logs=[], unlockedAchs=[];
+let currentEnemy = null;
+
+function initMap(){
+  map = [];
+  objects = {};
+  for(let r=0;r<GRID;r++){map.push([]); for(let c=0;c<GRID;c++) map[r].push(T.FLOOR);}
+  const walls=[[0,3],[0,4],[0,5],[1,3],[2,3],[2,4],[2,5],[2,6],[2,7],[3,1],[3,2],[4,0],[4,1],[4,5],[4,6],[5,3],[5,4],[6,2],[6,3],[6,6],[6,7],[7,1],[7,5],[8,2],[8,3],[8,4]];
+  walls.forEach(([r,c])=>map[r][c]=T.WALL);
+  const objs=[
+    {r:0,c:8,t:T.EXIT},{r:1,c:5,t:T.WEAPON},{r:2,c:2,t:T.ENEMY},{r:3,c:5,t:T.TREASURE},
+    {r:3,c:8,t:T.POTION},{r:4,c:3,t:T.ARMOR},{r:5,c:7,t:T.ENEMY},{r:6,c:1,t:T.WEAPON},
+    {r:6,c:5,t:T.TREASURE},{r:7,c:3,t:T.ENEMY},{r:7,c:7,t:T.POTION},{r:8,c:0,t:T.ENEMY},{r:8,c:7,t:T.ARMOR},
+    {r:5,c:2,t:T.KEY}
+  ];
+  objs.forEach(o=>{
+    if(map[o.r][o.c]===T.FLOOR){
+      map[o.r][o.c]=o.t;
+      if(o.t===T.ENEMY) objects[`${o.r},${o.c}`]={...ENEMIES[Math.floor(Math.random()*ENEMIES.length)]};
+      else if(ITEMS[o.t]) objects[`${o.r},${o.c}`]={...ITEMS[o.t][Math.floor(Math.random()*ITEMS[o.t].length)]};
+      else if(o.t===T.TREASURE) objects[`${o.r},${o.c}`]={...ITEMS[3][Math.floor(Math.random()*ITEMS[3].length)]};
     }
+  });
+}
 
-    function mostrarEstado() {
-      const nodo = obtenerNodo(posicion);
-      document.getElementById("ubicacion").textContent = `${nodo.nombre} (id: ${nodo.id})`;
-      const caminos = nodo.caminos.map(id => `id: ${id}`).join(', ');
-      document.getElementById("caminos").textContent = caminos || "Ninguno (¡has llegado al final!)";
-    }
+function drawPixel(ctx,x,y,color,size=CELL){
+  ctx.fillStyle=color;
+  ctx.fillRect(x*CELL+1,y*CELL+1,size-2,size-2);
+}
 
-    function ejecutarComando() {
-      const entrada = document.getElementById("comando").value.trim();
-      const regex = /^UPDATE\s+posicion\s+SET\s+id\s*=\s*(\d+);?$/i;
-      const match = entrada.match(regex);
+function drawChar(ctx,x,y,char,color,size=14){
+  ctx.fillStyle=color; ctx.font=`${size}px monospace`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(char,x*CELL+CELL/2,y*CELL+CELL/2);
+}
 
-      const mensaje = document.getElementById("mensaje");
-
-      if (!match) {
-        mensaje.textContent = "❌ Comando inválido. Usa: UPDATE posicion SET id = X;";
-        mensaje.className = "error";
-        return;
+function render(){
+  const canvas=document.getElementById('mapCanvas');
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d0d'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  if(tilesImage.complete){
+    for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++){
+      const t=map[r][c];
+      const tileIdx=TILE_SPRITES[t];
+      if(tileIdx!==undefined){
+        const tx=(tileIdx%12)*(TILE_SIZE+1);
+        const ty=Math.floor(tileIdx/12)*(TILE_SIZE+1);
+        ctx.drawImage(tilesImage,tx,ty,TILE_SIZE,TILE_SIZE,c*CELL,r*CELL,CELL,CELL);
       }
+    }
+  } else {
+    for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++){
+      const t=map[r][c];
+      ctx.fillStyle=TILE_MAP_Colors[t];
+      ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
+    }
+  }
+  
+  drawPixel(ctx,hero.x,hero.y,'#4ec9b0');
+  ctx.fillStyle='#0d0d0d'; ctx.font='bold 13px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('◆',hero.x*CELL+CELL/2,hero.y*CELL+CELL/2);
+  
+  ctx.strokeStyle='#4ec9b0'; ctx.lineWidth=1;
+  for(let r=0;r<=GRID;r++){ctx.beginPath();ctx.moveTo(0,r*CELL);ctx.lineTo(GRID*CELL,r*CELL);ctx.stroke();}
+  for(let c=0;c<=GRID;c++){ctx.beginPath();ctx.moveTo(c*CELL,0);ctx.lineTo(c*CELL,GRID*CELL);ctx.stroke();}
+}
 
-      const destino = parseInt(match[1]);
-      const nodoActual = obtenerNodo(posicion);
+function addLog(msg,cls=''){
+  logs.unshift(`<span class="${cls}">${msg}</span>`);
+  if(logs.length>20) logs.pop();
+  document.getElementById('log').innerHTML=logs.join('<br>');
+}
 
-      if (nodoActual.caminos.includes(destino)) {
-        posicion = destino;
-        mostrarEstado();
-        mensaje.textContent = "✅ Movimiento exitoso.";
-        mensaje.className = "correcto";
-        if (obtenerNodo(posicion).caminos.length === 0) {
-          mensaje.textContent += " ¡Has llegado al TESORO!";
-        }
+function updateStats(){
+  document.getElementById('s-hp').textContent=`${hero.hp}/${hero.maxHp}`;
+  document.getElementById('s-atk').textContent=hero.atk;
+  document.getElementById('s-def').textContent=hero.def;
+  document.getElementById('s-lvl').textContent=hero.lvl;
+  document.getElementById('s-xp').textContent=`${hero.xp}/${hero.xpNext}`;
+  document.getElementById('s-pos').textContent=`(${hero.x},${hero.y})`;
+  document.getElementById('s-gold').textContent=hero.gold;
+  const inv=document.getElementById('inventory');
+  if(inventory.length===0){inv.innerHTML='<span style="font-size:11px;color:#555">Vacío</span>';return;}
+  inv.innerHTML=inventory.map(i=>`<span class="item-badge ${i.type}">${i.name}</span>`).join('');
+}
+
+function setHint(txt){ document.getElementById('hint').textContent=txt; }
+
+function checkLevelUp(){
+  if(hero.xp>=hero.xpNext){
+    hero.xp-=hero.xpNext; hero.lvl++; hero.xpNext=Math.floor(hero.xpNext*1.6);
+    hero.maxHp+=20; hero.hp=hero.maxHp; hero.atk+=3;
+    addLog(`¡Subiste al nivel ${hero.lvl}! HP y ATK aumentados.`,'log-reward');
+    checkAchievement('level_up');
+  }
+}
+
+function unlockAchievement(id){
+  if(!unlockedAchs.includes(id)){
+    unlockedAchs.push(id);
+    const ach=ACHIEVEMENTS.find(a=>a.id===id);
+    addLog(`🏆 Logro desbloqueado: ${ach.name} - ${ach.desc}`,'log-reward');
+    document.getElementById('achs').textContent=unlockedAchs.length;
+  }
+}
+
+function checkAchievement(id){
+  const ach=ACHIEVEMENTS.find(a=>a.id===id);
+  if(!ach)return;
+  if(id==='first_blood'&&hero.kills>=1)unlockAchievement(id);
+  if(id==='treasure_hunter'&&hero.chests>=5)unlockAchievement(id);
+  if(id==='level_up'&&hero.lvl>=2)unlockAchievement(id);
+  if(id==='rich'&&hero.gold>=200)unlockAchievement(id);
+  if(id==='explorer'&&hero.steps>=15)unlockAchievement(id);
+  if(id==='slayer'&&hero.kills>=5)unlockAchievement(id);
+  if(id==='survivor'&&hero.hp<20&&hero.hp>0)unlockAchievement(id);
+  if(id==='boss_killer'&&hero.kills>0&&!ENEMIES.some(e=>e.name==='Dragón Menor'))unlockAchievement(id);
+  if(id==='richer'&&hero.gold>=500)unlockAchievement(id);
+}
+
+function saveGame(){
+  const saveData={hero,inventory,unlockedAchs,map,objects};
+  localStorage.setItem('sqlquest_save',JSON.stringify(saveData));
+  addLog('Partida guardada.','log-ok');
+}
+
+function loadGame(){
+  const saved=localStorage.getItem('sqlquest_save');
+  if(!saved){addLog('No hay partida guardada.','log-err');return;}
+  const data=JSON.parse(saved);
+  hero={...hero,...data.hero};
+  inventory=data.inventory||[];
+  unlockedAchs=data.unlockedAchs||[];
+  map=data.map||[];
+  objects=data.objects||{};
+  document.getElementById('achs').textContent=unlockedAchs.length;
+  render();updateStats();
+  addLog('Partida cargada.','log-ok');
+}
+
+function resetGame(){
+  if(!confirm('¿Iniciar nueva partida? Se perderá el progreso actual.'))return;
+  localStorage.removeItem('sqlquest_save');
+  hero={x:0,y:0,hp:100,maxHp:100,atk:10,lvl:1,xp:0,xpNext:50,gold:0,def:0,steps:0,kills:0,chests:0};
+  inventory=[];logs=[];unlockedAchs=[];currentEnemy=null;
+  document.getElementById('achs').textContent='0';
+  initMap();hero.x=0;hero.y=8;
+  render();updateStats();
+  addLog('Nueva partida iniciada.','log-info');
+}
+
+const DIRS = {norte:[0,-1],sur:[0,1],este:[1,0],oeste:[-1,0]};
+const DIR_NAMES = {norte:'Norte (y-1)',sur:'Sur (y+1)',este:'Este (x+1)',oeste:'Oeste (x-1)'};
+
+function getCellInfo(){
+  const adj=[];
+  for(const[dir,[dx,dy]] of Object.entries(DIRS)){
+    const nx=hero.x+dx, ny=hero.y+dy;
+    if(nx>=0&&nx<GRID&&ny>=0&&ny<GRID&&map[ny][nx]!==T.WALL) adj.push(`'${dir}' (${nx},${ny})`);
+  }
+  return adj;
+}
+
+function handleMove(dir){
+  if(!DIRS[dir]){addLog('Dirección inválida. Usa: norte, sur, este, oeste','log-err');return;}
+  const[dx,dy]=DIRS[dir];
+  const nx=hero.x+dx, ny=hero.y+dy;
+  if(nx<0||nx>=GRID||ny<0||ny>=GRID){addLog('Fuera del mapa.','log-err');return;}
+  if(map[ny][nx]===T.WALL){addLog('¡Hay un muro en esa dirección!','log-err');return;}
+  hero.x=nx; hero.y=ny;
+  hero.steps++;
+  checkAchievement('explorer');
+  const cell=map[ny][nx];
+  const key=`${ny},${nx}`;
+  if(cell===T.ENEMY){
+    const e=objects[key];
+    currentEnemy=e;
+    addLog(`¡Encontraste a ${e.name}! (HP:${e.hp} ATK:${e.atk})`, 'log-err');
+    setHint(`Combate: INSERT INTO ataque VALUES ('espada'); o usa poción: UPDATE héroe SET hp = hp + 30;`);
+  } else if(cell===T.KEY){
+    const obj=objects[key];
+    inventory.push(obj);
+    addLog(`¡Encontraste ${obj.name}! Necesitasla para abrir la salida.`, 'log-reward');
+    map[ny][nx]=T.FLOOR; delete objects[key];
+  } else if(cell===T.WEAPON||cell===T.ARMOR||cell===T.POTION||cell===T.TREASURE){
+    const obj=objects[key];
+    if(obj){
+      if(obj.type==='gold'){hero.gold+=obj.val;hero.chests++;addLog(`Recogiste ${obj.name} (+${obj.val} oro)`,'log-reward');checkAchievement('treasure_hunter');}
+      else if(obj.type==='potion'){inventory.push(obj);addLog(`Guardaste ${obj.name}`,'log-ok');}
+      else{
+        inventory.push(obj);
+        if(obj.atk){hero.atk=Math.max(hero.atk,obj.atk);addLog(`Equipaste ${obj.name} (ATK→${hero.atk})`,'log-ok');}
+        if(obj.def){hero.def+=obj.def;addLog(`Equipaste ${obj.name} (DEF+${obj.def})`,'log-ok');}
+      }
+      map[ny][nx]=T.FLOOR; delete objects[key];
+    }
+  } else if(cell===T.EXIT){
+    const hasKey=inventory.some(i=>i.type==='key');
+    if(hasKey){
+      addLog('¡Usaste la llave y escapaste! ¡VICTORIA!','log-reward');
+      checkAchievement('master');
+    } else {
+      addLog('¡Necesitas la Llave Dorada para salir!','log-err');
+      hero.x=Math.max(0,hero.x-1); hero.y=Math.max(0,hero.y-1);
+    }
+  } else {
+    const adj=getCellInfo();
+    addLog(`Te moviste al ${dir}. Pos(${nx},${ny})`,'log-ok');
+    setHint(`Moverte: UPDATE héroe SET posicion = '${adj[0]||'...'}'... | Caminos: ${adj.join(', ')}`);
+  }
+  updateStats(); render();
+}
+
+function handleAttack(){
+  if(!currentEnemy){addLog('No hay enemigo en combate.','log-err');return;}
+  const dmg=hero.atk+Math.floor(Math.random()*5);
+  currentEnemy.hp-=dmg;
+  addLog(`Atacaste a ${currentEnemy.name} por ${dmg} daño.`,'log-ok');
+  if(currentEnemy.hp<=0){
+    addLog(`¡Derrotaste a ${currentEnemy.name}! +${currentEnemy.xp}XP +${currentEnemy.gold}oro`,'log-reward');
+    hero.xp+=currentEnemy.xp; hero.gold+=currentEnemy.gold; hero.kills++;
+    const key=`${hero.y},${hero.x}`; map[hero.y][hero.x]=T.FLOOR; delete objects[key];
+    currentEnemy=null; checkLevelUp();
+    checkAchievement('first_blood');
+    checkAchievement('slayer');
+    if(currentEnemy && currentEnemy.name==='Dragón Menor') checkAchievement('boss_killer');
+    checkAchievement('rich');
+    checkAchievement('richer');
+    setHint(`Moverte: UPDATE héroe SET posicion = '[dirección]';`);
+  } else {
+    const edmg=Math.max(1,currentEnemy.atk-hero.def+Math.floor(Math.random()*4));
+    hero.hp=Math.max(0,hero.hp-edmg);
+    addLog(`${currentEnemy.name} te atacó por ${edmg}. HP: ${hero.hp}/${hero.maxHp}`, hero.hp<30?'log-err':'');
+    if(hero.hp<20) checkAchievement('survivor');
+    if(hero.hp===0) addLog('¡Has sido derrotado! Recarga la página.','log-err');
+    setHint(`Sigue atacando: INSERT INTO ataque VALUES ('espada'); o cura: UPDATE héroe SET hp = hp + 30;`);
+  }
+  updateStats(); render();
+}
+
+function handleHeal(){
+  const pot=inventory.find(i=>i.type==='potion');
+  if(!pot){addLog('No tienes pociones.','log-err');return;}
+  inventory.splice(inventory.indexOf(pot),1);
+  hero.hp=Math.min(hero.maxHp,hero.hp+pot.hp);
+  addLog(`Usaste ${pot.name}. HP → ${hero.hp}/${hero.maxHp}`,'log-ok');
+  updateStats();
+}
+
+function ejecutar(){
+  const raw=document.getElementById('cmd').value.trim();
+  document.getElementById('cmd').value='';
+  if(!raw){return;}
+  const sql=raw.toUpperCase();
+
+  // SELECT estado
+  if(/^SELECT \* FROM (HEROE|HÉROE|HERO)/.test(sql)){
+    addLog(`Héroe: HP ${hero.hp}/${hero.maxHp} | ATK ${hero.atk} | Nivel ${hero.lvl} | XP ${hero.xp}/${hero.xpNext} | Oro ${hero.gold}`,'log-info');
+    return;
+  }
+  if(/^SELECT \* FROM (MAPA|MAP)/.test(sql)){
+    const adj=getCellInfo();
+    let msg=`📍 Estás en (${hero.x},${hero.y}). `;
+    msg+=`Caminos disponibles: ${adj.join(', ')||'ninguno (bloqueado)'}`;
+    if(currentEnemy){
+      msg+=` | ¡ENEMIGO: ${currentEnemy.name} (HP:${currentEnemy.hp})!`;
+    }
+    const cell=map[hero.y]&&map[hero.y][hero.x];
+    if(cell===T.EXIT) msg+=' | 🚪 SALIDA CERCA';
+    if(cell===T.KEY||cell===T.TREASURE||cell===T.WEAPON||cell===T.ARMOR||cell===T.POTION){
+      const objs=objects[`${hero.y},${hero.x}`];
+      if(objs) msg+=` | ✨ OBJETO: ${objs.name}`;
+    }
+    addLog(msg,'log-info');
+    return;
+  }
+  if(/^SELECT \* FROM INVENTARIO/.test(sql)){
+    if(inventory.length===0) addLog('Inventario vacío.','log-info');
+    else addLog('Inventario: '+inventory.map(i=>i.name).join(', '),'log-info');
+    return;
+  }
+  if(/^SELECT \* FROM ENEMIGOS/.test(sql)){
+    if(currentEnemy) addLog(`Enemigo actual: ${currentEnemy.name} | HP ${currentEnemy.hp} | ATK ${currentEnemy.atk}`,'log-info');
+    else addLog('No hay enemigo activo.','log-info');
+    return;
+  }
+
+  // UPDATE mover
+  const moveMatch = raw.match(/UPDATE\s+h[eé]roe\s+SET\s+(posicion|posición|pos)\s*=\s*['"]?(norte|sur|este|oeste)['"]?\s*;?/i);
+  if(moveMatch){ handleMove(moveMatch[1].toLowerCase()); return; }
+
+  // Posición como columna de SELECT
+  const posMatch = raw.match(/^SELECT\s+posicion|posición|pos\s+FROM/i);
+  if(posMatch){
+    const adj=getCellInfo();
+    addLog(`Posición: (${hero.x},${hero.y}). Caminos: ${adj.join(', ')||'ninguno'}`,'log-info');
+    return;
+  }
+
+  // HELP
+  if(/^HELP|AYUDA|\?$/i.test(sql)){
+    showHelp();
+    return;
+  }
+
+  // INSERT atacar
+  if(/INSERT\s+INTO\s+ataque/.test(sql)){ handleAttack(); return; }
+
+  // UPDATE curar
+  if(/UPDATE\s+H[EÉ]ROE\s+SET\s+HP\s*=\s*HP\s*\+/.test(sql)){ handleHeal(); return; }
+
+  // DELETE enemigo (huir)
+  if(/DELETE\s+FROM\s+COMBATE/.test(sql)){
+    if(currentEnemy){
+      currentEnemy=null; addLog('Huiste del combate.','log-info');
+      hero.x=Math.max(0,hero.x-1); render(); updateStats();
+    } else addLog('No estás en combate.','log-err');
+    return;
+  }
+
+  // SELECT con columnas específicas
+  const colMatch = raw.match(/^SELECT\s+(\w+)\s+FROM\s+(\w+)/i);
+  if(colMatch){
+    const col=colMatch[1].toLowerCase(), tbl=colMatch[2].toLowerCase();
+    if(tbl==='heroes'||tbl==='heroe'||tbl==='hero'){
+      if(col==='*'||col==='all'){
+        addLog(`HP:${hero.hp} ATK:${hero.atk} DEF:${hero.def} lvl:${hero.lvl} XP:${hero.xp}/${hero.xpNext} gold:${hero.gold}`,'log-info');
+      } else if(col==='hp'||col==='health'){
+        addLog(`HP: ${hero.hp}/${hero.maxHp}`,'log-info');
+      } else if(col==='atk'||col==='attack'){
+        addLog(`ATK: ${hero.atk}`,'log-info');
+      } else if(col==='def'||col==='defense'){
+        addLog(`DEF: ${hero.def}`,'log-info');
+      } else if(col==='gold'||col==='oro'){
+        addLog(`Oro: ${hero.gold}`,'log-info');
+      } else if(col==='level'||col==='nivel'){
+        addLog(`Nivel: ${hero.lvl}`,'log-info');
       } else {
-        mensaje.textContent = "❌ Ese camino no es válido desde tu posición actual.";
-        mensaje.className = "error";
+        addLog(`Columna '${col}' no existe en héroes.`,'log-err');
       }
-
-      document.getElementById("comando").value = "";
+      return;
     }
+    if(tbl==='inventory'||tbl==='inventario'){
+      if(col==='*'||col==='all'||col==='name'||col==='nombre'){
+        if(inventory.length===0) addLog('Inventario vacío.','log-info');
+        else addLog(inventory.map(i=>i.name).join(', '),'log-info');
+      } else if(col==='type'||col==='tipo'){
+        if(inventory.length===0) addLog('Inventario vacío.','log-info');
+        else addLog(inventory.map(i=>i.type).join(', '),'log-info');
+      } else if(col==='atk'||col==='attack'){
+        const atkItems=inventory.filter(i=>i.atk);
+        if(atkItems.length===0) addLog('No hay armas.','log-info');
+        else addLog(atkItems.map(i=>i.name+'(ATK'+i.atk+')').join(', '),'log-info');
+      } else if(col==='def'||col==='defense'){
+        const defItems=inventory.filter(i=>i.def);
+        if(defItems.length===0) addLog('No hay armaduras.','log-info');
+        else addLog(defItems.map(i=>i.name+'(DEF'+i.def+')').join(', '),'log-info');
+      }
+      return;
+    }
+  }
 
-    // Mostrar estado inicial
-    mostrarEstado();
-  </script>
+  // SELECT COUNT
+  if(/^SELECT\s+COUNT/i.test(sql)){
+    if(/inventory/i.test(sql)||/inventario/i.test(sql)){
+      addLog(`Total items: ${inventory.length}`,'log-info');
+    } else if(/enemigos/i.test(sql)){
+      let enemyCount=0;
+      for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++)if(map[r][c]===T.ENEMY)enemyCount++;
+      addLog(`Enemigos restantes: ${enemyCount}`,'log-info');
+    }
+    return;
+  }
 
-</body>
-</html>
+  // Comando no reconocido
+  addLog(`Error: comando no reconocido. Prueba SELECT * FROM mapa;`,'log-err');
+}
+
+document.getElementById('cmd').addEventListener('keydown',e=>{ if(e.key==='Enter') ejecutar(); });
+
+initMap();
+hero.x=0; hero.y=8;
+loadTiles();
+render(); updateStats();
+setHint("Empieza: SELECT * FROM mapa; — para ver tus caminos");
+addLog('Usa SELECT * FROM mapa; para explorar.','log-info');
+
+function closeTutorial(){
+  document.getElementById('tutorial').style.display='none';
+  addLog('¡Explora el laberinto! Escribe SELECT * FROM mapa; para empezar.','log-info');
+}
+
+function showHelp(){
+  addLog('=== AYUDA SQL ===','log-info');
+  addLog('SELECT * FROM mapa; — Ver posición y direcciones','log-cmd');
+  addLog("UPDATE héroe SET posición = 'norte'; — Moverse",'log-cmd');
+  addLog('SELECT * FROM héroes; — Ver stats','log-cmd');
+  addLog('SELECT * FROM inventario; — Ver objetos','log-cmd');
+  addLog('INSERT INTO ataque; — Atacar','log-cmd');
+  addLog('UPDATE héroes SET hp = hp + 30; — Curarse','log-cmd');
+  addLog('DELETE FROM combate; — Huir del combate','log-cmd');
+}
+</script>
