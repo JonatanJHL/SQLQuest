@@ -132,7 +132,8 @@ SQL Quest no recopila ningún dato personal. Todo el progreso se guarda localmen
 
 ## o miralo en tu equipo(versión no actualizda)
 
-Abre sql_quest_rpg_v2.html en tu navegador
+Abre index.html en tu navegador
+
 Usa comandos SQL para moverte, investigar y combatir:
 
 ---
