@@ -1,72 +1,143 @@
-# SQL Quest — Aprende SQL Jugando
+# ⚔ SQL Quest
 
-Un juego RPG educativo donde aprendes SQL/MySQL mientras exploras un dungeon, combates enemigos y resuelves puzzles usando comandos SQL reales.
+> Aprende SQL jugando un RPG de mazmorras. Escribe queries reales para moverte, atacar, curar y conquistar zonas.
 
-> ⚠️ **Uso educativo exclusivamente** — Para escuelas, universidades y aprendizaje personal. Sin fines de lucro.
+<p align="center">
+  <a href="https://play.google.com/store/apps/details?id=com.joatnjhl.sqlquest.app&hl=es">
+    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/es_badge_web_generic.png" alt="Disponible en Google Play" height="80"/>
+  </a>
+</p>
 
-## 🎮 Cómo Jugar
+---
 
-1. Abre `sql_quest_rpg_v2.html` en tu navegador
-2. Usa comandos SQL para moverte, investigar y combatir:
+## ¿Qué es SQL Quest?
+
+SQL Quest es un juego educativo de tipo RPG donde el jugador aprende SQL de forma progresiva mientras explora mazmorras generadas proceduralmente, combate enemigos y desbloquea nuevas zonas. Cada acción del juego se ejecuta mediante un comando SQL real.
 
 ```sql
-SELECT * FROM mapa;                    -- Ver posición y caminos
-UPDATE heroes SET position = 'north'; -- Moverse al norte
-SELECT hp FROM heroes;                 -- Ver vida actual
-INSERT INTO attack;                  -- Atacar enemigo
-SELECT * FROM inventory;             -- Ver objetos
-UPDATE heroes SET hp = hp + 30;       -- Curarse (con poción)
-DELETE FROM combate;                -- Huir del combate
+-- Para moverte
+UPDATE héroe SET posición = 'norte';
+
+-- Para atacar
+INSERT INTO ataque VALUES ('espada');
+
+-- Para analizar el mapa
+SELECT * FROM enemigos WHERE atk > 5;
 ```
-
-## 📚 Plan de Estudios (10 Niveles)
-
-| Nivel | Tema SQL | Desafío |
-|-------|---------|---------|
-| 1 | `SELECT *`, `FROM`, `UPDATE` | Exploración básica — llegar a la salida |
-| 2 | `SELECT columna` | Buscar objeto específico con columna |
-| 3 | `WHERE`, `>`, `<`, `=`, `!=` | Filtrar enemigos por estadísticas |
-| 4 | `ORDER BY`, `LIMIT` | Encontrar mejor loot |
-| 5 | `AND`, `OR`, `NOT` | Lógicas complejas |
-| 6 | `COUNT`, `SUM`, `AVG` |统计分析 |
-| 7 | `GROUP BY`, `HAVING` | Agrupar por tipo |
-| 8 | `JOIN`, `INNER`, `LEFT` |Combinar tablas |
-| 9 | Subqueries | Consultas anidadas |
-| 10 | `CASE`, `INDEX` | Nivel avanzado |
-
-## 🛠️ Requisitos
-
-- Navegador moderno (Chrome, Firefox, Edge, Safari)
-- **NO requiere servidor** — funciona offline
-
-## 📁 Estructura del Proyecto
-
-```
-sqlQuest/
-├── sql_quest_rpg_v2.html   (Juego completo)
-├── README.md              (Este archivo)
-└── LICENSE             (Licencia)
-```
-
-## 📜 Licencia
-
-**Uso educativo no lucrativo** — Ver archivo `LICENSE`.
 
 ---
 
-## 🤝 Cómo Contribuir
+## Modos de juego
 
-1. Fork el repositorio
-2. Crea una rama (`git checkout -b feature/nueva`)
-3. Commit tus cambios
-4. Push a GitHub
-5. Abre un Pull Request
+### 📚 Modo Aprendizaje
+- 13 lecciones progresivas con narrativa integrada
+- Feedback inteligente: detecta el error exacto en tu query
+- Scaffolding adaptativo: más ayuda cuando la necesitas, menos cuando dominas
+- Retrieval Rooms entre zonas para consolidar lo aprendido
+- Mini-quiz automático cada 3 lecciones
 
-## ⭐ Créditos
-
-- **Desarrollador**: JonatanJHL
-- **Inspiración**: SQL RPG Mystery, Select Star SQL
+### ⚔ Modo Campaña
+- Se desbloquea al completar todas las lecciones
+- Sin chips, sin hints — SQL puro
+- Enemigos más poderosos que exigen queries complejos
+- Zonas exclusivas: Torre del SQL Maestro y Abismo del Caos
 
 ---
 
-*SQL Quest — Aprende SQL jugando, explora el dungeon, conviértete en maestro SQL.*
+## Comandos SQL que aprenderás
+
+| Comando | Zona | Uso en el juego |
+|---|---|---|
+| `SELECT *` | Caverna Inicial | Explorar el mapa |
+| `UPDATE SET` | Caverna Inicial | Moverte por el mapa |
+| `SELECT columna` | Pasillos del Conocimiento | Consultar tus stats |
+| `WHERE` | Pasillos del Conocimiento | Filtrar enemigos |
+| `INSERT` | Arena de Consultas | Atacar |
+| `DELETE` | Arena de Consultas | Huir del combate |
+| `COUNT` | Laboratorio de Análisis | Contar enemigos |
+| `ORDER BY` | Laboratorio de Análisis | Ordenar inventario |
+| `GROUP BY` | Laboratorio de Análisis | Agrupar items |
+| `JOIN` | Torre del SQL Maestro | Cruzar la torre |
+| `Subconsultas` | Torre del SQL Maestro | Derrotar al jefe |
+| `HAVING` | Abismo del Caos | Modo campaña |
+| `TRANSACTION` | Abismo del Caos | Modo campaña |
+
+---
+
+## Modelo pedagógico
+
+El juego aplica 4 capas de aprendizaje basadas en la Taxonomía de Bloom y el modelo de Vygotsky:
+
+1. **Exposición contextual** — El NPC introduce el comando dentro de la narrativa
+2. **Práctica guiada** — Chips y hints visibles, feedback inmediato
+3. **Práctica libre** — Sin chips, el jugador escribe solo
+4. **Retrieval challenge** — Sin ninguna ayuda, memoria pura
+
+El sistema adaptativo ajusta el nivel de scaffolding automáticamente: 3 errores consecutivos activan la ayuda, 3 aciertos consecutivos la desactivan.
+
+---
+
+## Características técnicas
+
+- **Mapas procedurales** generados con algoritmo BSP por semilla
+- **Pixel art** dibujado en Canvas nativo de Android (sin librerías externas)
+- **Fog of war** con revelado progresivo por celda
+- **Sistema de mastery** por comando: Visto → Practicado → Dominado → Retenido
+- **Feedback inteligente** — detecta typos, falta de `;`, tablas incorrectas, orden de cláusulas
+- **Sin internet requerido** — funciona 100% offline
+- **Sin publicidad** — sin SDKs de terceros
+
+---
+
+## Stack
+
+```
+Kotlin 1.9
+Android SDK 35 (minSdk 24)
+AndroidX / Material Components 1.13.0
+Canvas 2D API (pixel art nativo)
+SharedPreferences (guardado local)
+```
+
+---
+
+## Estructura del proyecto
+
+```
+app/src/main/java/com/joatnjhl/sqlquest/app/
+├── GameData.kt        — Tipos, zonas, lecciones, quiz bank, sistema de mastery
+├── GameEngine.kt      — Lógica del juego, SQL parser, feedback inteligente
+├── MapGenerator.kt    — Generación BSP de mazmorras
+├── MapView.kt         — Pixel art en Canvas nativo
+└── MainActivity.kt    — UI programática, dos modos de juego
+```
+
+---
+
+## Privacidad
+
+SQL Quest no recopila ningún dato personal. Todo el progreso se guarda localmente en el dispositivo.
+
+👉 [Política de Privacidad](https://TU_USUARIO.github.io/sqlquest-privacy/)
+
+---
+
+## Descarga
+
+<a href="https://play.google.com/store/apps/details?id=com.joatnjhl.sqlquest.app&hl=es">
+  <strong>Google Play Store →</strong>
+</a>
+
+---
+
+## o miralo en tu equipo(versión no actualizda)
+
+Abre sql_quest_rpg_v2.html en tu navegador
+Usa comandos SQL para moverte, investigar y combatir:
+
+---
+
+## Licencia
+
+Este proyecto fue desarrollado como herramienta educativa.  
+© 2026 Jonatan Hidalgo — Todos los derechos reservados.
